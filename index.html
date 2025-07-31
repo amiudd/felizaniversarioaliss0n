@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Universo Galáctico de Amor</title>
   <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
   <style>
@@ -11,6 +11,7 @@
       padding: 0;
       overflow: hidden;
       height: 100%;
+      touch-action: manipulation;
       background: #000;
       background-image: radial-gradient(ellipse at center, #1a0033 0%, #000000 100%);
     }
@@ -20,12 +21,14 @@
       top: 0;
       left: 0;
       z-index: 0;
+      width: 100%;
+      height: 100%;
     }
 
     .te-amo {
       position: absolute;
       font-family: 'Dancing Script', cursive;
-      font-size: 32px;
+      font-size: 5vw;
       font-weight: bold;
       text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
       opacity: 1;
@@ -44,7 +47,7 @@
     .mensaje-especial {
       position: absolute;
       font-family: 'Pacifico', cursive;
-      font-size: 36px;
+      font-size: 6vw;
       color: #ff9ec6;
       text-shadow: 0 0 10px #ff66b2, 0 0 20px #ff0080, 0 0 30px #ff0080;
       opacity: 0;
@@ -53,15 +56,17 @@
       text-align: center;
       width: 100%;
       top: 40%;
-      animation: aparecer 12s ease-in-out forwards;
+      animation: aparecer 6s ease-in-out forwards;
+      transform: translateY(-50%);
+      padding: 0 10px;
+      box-sizing: border-box;
     }
 
     @keyframes aparecer {
-      0% { opacity: 0; transform: scale(0.5); }
-      20% { opacity: 1; transform: scale(1.1); }
-      30% { opacity: 1; transform: scale(1); }
-      80% { opacity: 1; transform: scale(1); }
-      100% { opacity: 0; transform: scale(0.5); }
+      0% { opacity: 0; transform: translateY(-50%) scale(0.5); }
+      20% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+      30%, 80% { opacity: 1; transform: translateY(-50%) scale(1); }
+      100% { opacity: 0; transform: translateY(-50%) scale(0.5); }
     }
 
     #nombre-enamorada {
@@ -70,7 +75,7 @@
       left: 20px;
       z-index: 10;
       font-family: 'Pacifico', cursive;
-      font-size: 24px;
+      font-size: 5vw;
       color: white;
       text-shadow: 0 0 10px #ff80c0;
       opacity: 0.8;
@@ -89,11 +94,29 @@
       0%, 100% { opacity: 0.3; }
       50% { opacity: 1; }
     }
+
+    #play-button {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      background: #ff3399;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-family: 'Pacifico', cursive;
+      cursor: pointer;
+      box-shadow: 0 0 20px #ff0080;
+    }
   </style>
 </head>
 <body>
   <canvas id="fireworks"></canvas>
   <div id="nombre-enamorada"></div>
+  <button id="play-button">Toca para comenzar</button>
 
   <!-- Música de fondo -->
   <audio id="musica" preload="auto" loop>
@@ -108,6 +131,7 @@
 
     const fireworks = [];
     const musica = document.getElementById("musica");
+    const playButton = document.getElementById("play-button");
     
     // Sonidos de vuelo (ascenso) y explosión
     const vueloSounds = [
@@ -122,32 +146,38 @@
       new Audio("assets/audio/explosion4.mp3")
     ];
     
-    // Configurar volumen (AJUSTES PRINCIPALES)
-    musica.volume = 0.35;  // Volumen aumentado (35%)
+    // Configurar volumen
+    musica.volume = 0.35;
     vueloSounds.forEach(sound => {
-      sound.volume = 0.55;  // Volumen aumentado (55%)
+      sound.volume = 0.55;
       sound.preload = "auto";
     });
     explosionSounds.forEach(sound => {
-      sound.volume = 0.65;  // Volumen aumentado (65%)
+      sound.volume = 0.65;
       sound.preload = "auto";
     });
     
     const mensajesEspeciales = [
-      "Feliz primer aniversario Alisson",
+      "Feliz primer aniversario",
       "Te amo con todo mi corazón",
       "Eres el amor de mi vida",
       "Gracias por este año maravilloso",
-      "Para la mujer más especial de mi vida"
+      "Para la mujer más especial"
     ];
     const coloresRomanticos = [
       "#ff9ec6", "#ff80c0", "#ff66b2", "#ff4da6", "#ff3399",
       "#ff1a8c", "#ff0080", "#e60073", "#cc0066", "#b30059"
     ];
 
+    // Variables para controlar mensajes y fuegos artificiales
+    let indiceMensajeActual = 0;
+    let intervaloMensajes;
+    let intervaloFireworks;
+    let tiempoEntreFireworks = 2500; // 2.5 segundos entre fuegos artificiales
+
     // Crear estrellas de fondo
     function crearEstrellas() {
-      for (let i = 0; i < 150; i++) {
+      for (let i = 0; i < 100; i++) {
         const estrella = document.createElement("div");
         estrella.className = "estrella";
         estrella.style.width = `${Math.random() * 3 + 1}px`;
@@ -160,18 +190,69 @@
       }
     }
 
-    crearEstrellas();
-
-    function activarMusica() {
-      musica.play().catch(() => {});
-      document.removeEventListener("click", activarMusica);
-      document.removeEventListener("touchstart", activarMusica);
-      
-      mostrarMensajeEspecial("Feliz primer aniversario Alisson");
+    function iniciarExperiencia() {
+      playButton.style.display = "none";
+      crearEstrellas();
+      activarMusica();
     }
 
-    document.addEventListener("click", activarMusica);
-    document.addEventListener("touchstart", activarMusica);
+    function activarMusica() {
+      // En móviles necesitamos reproducir después de una interacción del usuario
+      const playPromise = musica.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          // Mostrar botón nuevamente si hay error
+          playButton.style.display = "block";
+        });
+      }
+      
+      iniciarSecuenciaMensajes();
+      iniciarSecuenciaFireworks();
+    }
+
+    function iniciarSecuenciaMensajes() {
+      mostrarMensajeEspecial(mensajesEspeciales[indiceMensajeActual]);
+      indiceMensajeActual++;
+      
+      intervaloMensajes = setInterval(() => {
+        if (indiceMensajeActual < mensajesEspeciales.length) {
+          mostrarMensajeEspecial(mensajesEspeciales[indiceMensajeActual]);
+          indiceMensajeActual++;
+        } else {
+          indiceMensajeActual = 0;
+          clearInterval(intervaloMensajes);
+          setTimeout(iniciarSecuenciaMensajes, 8000);
+        }
+      }, 6000);
+    }
+
+    function iniciarSecuenciaFireworks() {
+      // Lanzar el primer fuego artificial
+      lanzarFuegoAleatorio();
+      
+      // Configurar intervalo para fuegos artificiales más espaciados
+      intervaloFireworks = setInterval(() => {
+        lanzarFuegoAleatorio();
+      }, tiempoEntreFireworks);
+    }
+
+    function lanzarFuegoAleatorio(x, y) {
+      const posX = x || random(canvas.width * 0.2, canvas.width * 0.8);
+      const posY = y || random(canvas.height * 0.2, canvas.height * 0.5);
+      fireworks.push(new Firework(posX, posY));
+    }
+
+    function mostrarMensajeEspecial(mensaje) {
+      const mensajeElement = document.createElement("div");
+      mensajeElement.className = "mensaje-especial";
+      mensajeElement.innerText = mensaje;
+      document.body.appendChild(mensajeElement);
+      
+      setTimeout(() => {
+        mensajeElement.remove();
+      }, 6000);
+    }
 
     function random(min, max) {
       return Math.random() * (max - min) + min;
@@ -240,7 +321,7 @@
         this.exploded = false;
         this.particles = [];
         this.color = coloresRomanticos[Math.floor(random(0, coloresRomanticos.length))];
-        this.speed = random(3, 6);
+        this.speed = random(2, 4); // Velocidad reducida
         this.size = random(3, 6);
         this.sparkles = [];
         this.vueloSound = null;
@@ -334,10 +415,6 @@
             this.color
           );
         }
-        
-        if (Math.random() < 0.2) {
-          mostrarMensajeEspecial();
-        }
       }
 
       draw() {
@@ -379,23 +456,34 @@
       setTimeout(() => texto.remove(), 10000);
     }
 
-    function mostrarMensajeEspecial(mensajeFijo) {
-      const mensaje = document.createElement("div");
-      mensaje.className = "mensaje-especial";
-      mensaje.innerText = mensajeFijo || mensajesEspeciales[Math.floor(Math.random() * mensajesEspeciales.length)];
-      document.body.appendChild(mensaje);
-      setTimeout(() => mensaje.remove(), 10000);
-    }
-
-    function lanzarFuego(x, y) {
-      fireworks.push(new Firework(x, y));
-      
-      if (Math.random() < 0.5) {
-        setTimeout(() => {
-          fireworks.push(new Firework());
-        }, random(300, 1000));
+    function getTouchPos(e) {
+      if (e.touches) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else {
+        return { x: e.clientX, y: e.clientY };
       }
     }
+
+    // Eventos táctiles para móviles
+    document.addEventListener("click", e => {
+      const pos = getTouchPos(e);
+      lanzarFuegoAleatorio(pos.x, pos.y);
+    });
+
+    document.addEventListener("touchstart", e => {
+      e.preventDefault();
+      const pos = getTouchPos(e);
+      lanzarFuegoAleatorio(pos.x, pos.y);
+    }, { passive: false });
+
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    // Botón de inicio para móviles
+    playButton.addEventListener("click", iniciarExperiencia);
+    playButton.addEventListener("touchstart", iniciarExperiencia);
 
     function animate() {
       ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
@@ -420,47 +508,8 @@
         }
       }
 
-      if (Math.random() < 0.03 && fireworks.length < 10) {
-        fireworks.push(new Firework());
-      }
-
       requestAnimationFrame(animate);
     }
-
-    function getTouchPos(e) {
-      if (e.touches) {
-        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      } else {
-        return { x: e.clientX, y: e.clientY };
-      }
-    }
-
-    document.addEventListener("click", e => {
-      const pos = getTouchPos(e);
-      lanzarFuego(pos.x, pos.y);
-    });
-
-    document.addEventListener("touchstart", e => {
-      const pos = getTouchPos(e);
-      lanzarFuego(pos.x, pos.y);
-    });
-
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
-
-    setTimeout(() => {
-      for (let i = 0; i < 3; i++) {
-        setTimeout(() => {
-          fireworks.push(new Firework());
-        }, i * 800);
-      }
-    }, 1000);
-
-    setTimeout(() => {
-      mostrarMensajeEspecial("Feliz primer aniversario Alisson");
-    }, 1500);
 
     animate();
   </script>
